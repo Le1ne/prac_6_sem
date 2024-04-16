@@ -24,17 +24,17 @@ wordsWhen p s = case dropWhile p s of
                   s' -> w : wordsWhen p s''
                         where (w, s'') = break p s'
 
-readProducts :: FilePath -> IO Products
+readProducts :: FilePath -> Products
 readProducts filePath = do
 	contents <- readFile filePath
 	return $ map parseProduct (lines contents)
 
-readCart :: FilePath -> IO Cart
+readCart :: FilePath -> Cart
 readCart filePath = do
 	contents <- readFile filePath
 	return $ map parseCartItem (lines contents)
 
-readBonusCard :: FilePath -> IO (Maybe BonusCard)
+readBonusCard :: FilePath -> (Maybe BonusCard)
 readBonusCard filePath = do
   	exists <- doesFileExist filePath
   	if exists
