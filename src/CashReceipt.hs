@@ -1,15 +1,15 @@
 module CashReceipt
-    ( Product,
-	  CartItem, 
-	  BonusCard,
-	  Products,
-	  Cart,
-	  findProductPrice,
-      calculateItemCost,
-      calculateTotal,
-      calculateDiscount,
-      calculateFinalTotal
-    ) where
+( Product,
+  CartItem, 
+  BonusCard,
+  Products,
+  Cart,
+  findProductPrice,
+  calculateItemCost,
+  calculateTotal,
+  calculateDiscount,
+  calculateFinalTotal
+) where
 
 import Data.List (lookup)
 
