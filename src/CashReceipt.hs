@@ -1,16 +1,23 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 module CashReceipt
-( Product,
-  CartItem, 
-  BonusCard,
-  Products,
-  Cart,
+( Product(..),
+  CartItem(..), 
+  BonusCard(..),
+  Products(..),
+  Cart(..),
+  Name(..),
+  Price(..),
+  Category(..), 
+  Quantity(..),
+  Discount(..),
   findProductPrice,
   calculateItemCost,
   calculateTotal,
   calculateDiscount,
-  calculateFinalTotal
+  calculateFinalTotal,
+  minDiscountRate, 
+  maxDiscountRate
 ) where
 
 newtype Name = Name String deriving (Eq, Show)

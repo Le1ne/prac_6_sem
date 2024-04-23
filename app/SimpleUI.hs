@@ -1,29 +1,31 @@
-module SimpleUI where
+module SimpleUI
+( runUI
+) where
 
 import Parser (readProducts, readCart, readBonusCard)
-import CashReceipt (calculateTotal, calculateDiscount, calculateFinalTotal, Products, Cart, BonusCard, Product, CartItem, Discount, Name)
+import CashReceipt (calculateTotal, calculateDiscount, calculateFinalTotal, BonusCard(..), Discount(..))
 import Data.Maybe (fromMaybe)
 
 errorLoadingProducts :: String
-errorLoadingProducts = "Error loading products: "
+errorLoadingProducts = "Ошибка загрузки списка продуктов: "
 
 errorLoadingCart :: String
-errorLoadingCart = "Error loading cart: "
+errorLoadingCart = "Ошибка загрузки корзины: "
 
 errorLoadingBonusCard :: String
-errorLoadingBonusCard = "Error loading bonus card: "
+errorLoadingBonusCard = "Ошибка загрузки бонусной карты: "
 
 welcomeMessage :: String
-welcomeMessage = "Welcome to the Simple Cash Receipt Application"
+welcomeMessage = "Добро пожаловать в приложение 'Кассовый аппарат'"
 
 promptProductsFile :: String
-promptProductsFile = "Please, enter the path to the products file:"
+promptProductsFile = "Пожалуйста, введите путь к файлу с продуктами:"
 
 promptCartFile :: String
-promptCartFile = "Please, enter the path to the cart file:"
+promptCartFile = "Пожалуйста, введите путь к файлу с корзиной:"
 
 promptBonusCardFile :: String
-promptBonusCardFile = "Please, enter the path to the bonus card file (leave empty if none):"
+promptBonusCardFile = "Пожалуйста, введите путь к файлу с бонусной картой (оставьте пустым, если её нет):"
 
 runUI :: IO ()
 runUI = do
@@ -45,11 +47,13 @@ runUI = do
                     bonusCardResult <- readBonusCard bonusCardPath
                     case bonusCardResult of
                         Left err -> putStrLn $ errorLoadingBonusCard ++ err
-                        Right bonusCard -> do
-                            let total = calculateTotal cart products
-                            let bonusCardApplied = fromMaybe (BonusCard Nothing (Discount 0)) bonusCard
-                            let discount = calculateDiscount total bonusCardApplied
-                            let finalTotal = calculateFinalTotal total discount
-                            putStrLn $ "Total without discount: " ++ show total
-                            putStrLn $ "Discount: " ++ show discount
-                            putStrLn $ "Final Total: " ++ show finalTotal
+                        Right maybeBonusCard -> do
+                            let bonusCardApplied = fromMaybe (BonusCard Nothing (Discount 0)) maybeBonusCard
+                            case calculateTotal cart products of
+                                Just total -> do
+                                    let discount = calculateDiscount total bonusCardApplied
+                                    let finalTotal = calculateFinalTotal total discount
+                                    putStrLn $ "Итог без скидки: " ++ show total
+                                    putStrLn $ "Скидка: " ++ show discount
+                                    putStrLn $ "Итог с учётом скидки: " ++ show finalTotal
+                                Nothing -> putStrLn "Ошибка подсчёта суммы покупок"
