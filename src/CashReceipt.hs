@@ -1,3 +1,5 @@
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+
 module CashReceipt
 ( Product,
   CartItem, 
@@ -11,82 +13,65 @@ module CashReceipt
   calculateFinalTotal
 ) where
 
-import Data.List (lookup)
+newtype Name = Name String deriving (Eq, Show)
+newtype Price = Price Double deriving (Show)
+newtype Category = Category String deriving (Show)
+newtype Quantity = Quantity Int deriving (Show, Eq, Ord, Enum, Num, Real, Integral)
+newtype Discount = Discount Double deriving (Show)
+newtype Products = Products [Product] deriving (Show)
+newtype Cart = Cart [CartItem] deriving (Show)
 
-newtype Name = Name String
-newtype Price = Price Double
-newtype Category = Category String
-newtype Quantity = Quantity Int
-newtype Discount = Discount Double
+minDiscountRate, maxDiscountRate, minPurchaseAmount :: Double
+minDiscountRate = 1
+maxDiscountRate = 7
+minPurchaseAmount = 3000
 
-instance Show Price where
-    show (Price price) = show price
+negativePriceError :: String
+negativePriceError = "Цена товара не может быть отрицательной."
 
-instance Show Quantity where
-    show (Quantity quantity) = show quantity
+invalidDiscountError :: String
+invalidDiscountError = "Значение скидки должно быть между 0 и 100 процентами."
 
-instance Show Name where
-    show (Name name) = show name
+negativeQuantityError :: String
+negativeQuantityError = "Количество товара не может быть отрицательным."
 
-instance Show Discount where
-    show (Discount discount) = show discount
+purchaseAmountError :: String
+purchaseAmountError = "Сумма покупок не может быть отрицательной."
 
-instance Show Category where
-    show (Category category) = show category
+discountRangeError :: String
+discountRangeError = "Скидка по бонусной карте применяется при значении от 1% до 7%."
 
-instance Eq Name where
-    (Name name1) == (Name name2) = name1 == name2
+getPrice :: Price -> Double
+getPrice (Price p)
+  | p < 0 = error negativePriceError
+  | otherwise = p
 
-instance Enum Quantity where
-    toEnum n = Quantity (toEnum n)
-    fromEnum (Quantity q) = fromEnum q
+findProductPrice :: Name -> Products -> Maybe Price
+findProductPrice name (Products products) = lookup name [(productName, price) | Product productName price _ <- products]
 
-instance Eq Quantity where
-    (Quantity a) == (Quantity b) = a == b
-    (Quantity a) /= (Quantity b) = a /= b
+calculateItemCost :: CartItem -> Products -> Maybe Double
+calculateItemCost (CartItem name (Quantity quantity)) products
+  | quantity < 0 = error negativeQuantityError
+  | otherwise = fmap ((* fromIntegral quantity) . getPrice) (findProductPrice name products)
 
-instance Ord Quantity where
-    compare (Quantity a) (Quantity b) = compare a b
+calculateTotal :: Cart -> Products -> Maybe Double
+calculateTotal (Cart cart) products = sum <$> sequence (map (`calculateItemCost` products) cart)
 
-instance Num Quantity where
-    (Quantity a) + (Quantity b) = Quantity (a + b)
-    (Quantity a) * (Quantity b) = Quantity (a * b)
-    abs (Quantity a) = Quantity (abs a)
-    signum (Quantity a) = Quantity (signum a)
-    fromInteger n = Quantity (fromInteger n)
-    (Quantity a) - (Quantity b) = Quantity (a - b)
+calculateDiscount :: Double -> BonusCard -> Double
+calculateDiscount total (BonusCard _ (Discount discountRate))
+  | total > minPurchaseAmount || (discountRate >= minDiscountRate && discountRate <= maxDiscountRate) = total * discountRate / 100
+  | otherwise = 0
 
-instance Real Quantity where
-    toRational (Quantity q) = toRational q
-
-instance Integral Quantity where
-    toInteger (Quantity q) = toInteger q
-    quotRem (Quantity a) (Quantity b) = let (q, r) = quotRem a b in (Quantity q, Quantity r)
+calculateFinalTotal :: Double -> Double -> Double
+calculateFinalTotal total discount = total - discount
 
 data Product = Product Name Price Category deriving (Show)
 data CartItem = CartItem Name Quantity deriving (Show)
 data BonusCard = BonusCard { birthday :: Maybe String, discountRate :: Discount } deriving (Show)
 
-type Products = [Product]
-type Cart = [CartItem]
-
-getPrice :: Price -> Double
-getPrice (Price p) = p
-
-getDiscount :: Discount -> Double
-getDiscount (Discount d) = d
-
-findProductPrice :: Name -> Products -> Maybe Price
-findProductPrice name products = lookup name [(productName, price) | Product productName price _ <- products]
-
-calculateItemCost :: CartItem -> Products -> Maybe Double
-calculateItemCost (CartItem name quantity) products = fmap ((* fromIntegral quantity) . getPrice) (findProductPrice name products)
-
-calculateTotal :: Cart -> Products -> Maybe Double
-calculateTotal cart products = sum <$> sequence (map (`calculateItemCost` products) cart)
-
-calculateDiscount :: Double -> BonusCard -> Double
-calculateDiscount total (BonusCard _ discountRate) = total * getDiscount(discountRate) / 100
-
-calculateFinalTotal :: Double -> Double -> Double
-calculateFinalTotal total discount = total - discount
+--BonusCard 1-7%, if total > 3000 => discount--
+--to consts--
+--Нужно добавить обработку ошибок (разных, например, чтение файла, проблемы с файлами, проблемы с числами, обработку в другой файл)--
+--Main не должен содержать парсера--
+--Убрать инстансы по комментарию выше--
+--Ошибки в отдельные константы--
