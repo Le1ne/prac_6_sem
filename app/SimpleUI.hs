@@ -27,6 +27,9 @@ promptCartFile = "Пожалуйста, введите путь к файлу с
 promptBonusCardFile :: String
 promptBonusCardFile = "Пожалуйста, введите путь к файлу с бонусной картой (оставьте пустым, если её нет):"
 
+promptOutputFile :: String
+promptOutputFile = "Пожалуйста, введите путь к файлу для сохранения результатов:"
+
 runUI :: IO ()
 runUI = do
     putStrLn welcomeMessage
@@ -36,6 +39,9 @@ runUI = do
     cartPath <- getLine
     putStrLn promptBonusCardFile
     bonusCardPath <- getLine
+    putStrLn promptOutputFile
+    outputFile <- getLine
+
     productsResult <- readProducts productsPath
     case productsResult of
         Left err -> putStrLn $ errorLoadingProducts ++ err
@@ -51,9 +57,10 @@ runUI = do
                             let bonusCardApplied = fromMaybe (BonusCard Nothing (Discount 0)) maybeBonusCard
                             case calculateTotal cart products of
                                 Just total -> do
-                                    let discount = calculateDiscount total bonusCardApplied
+                                    let discount = calculateDiscount total (Just bonusCardApplied)
                                     let finalTotal = calculateFinalTotal total discount
-                                    putStrLn $ "Итог без скидки: " ++ show total
-                                    putStrLn $ "Скидка: " ++ show discount
-                                    putStrLn $ "Итог с учётом скидки: " ++ show finalTotal
+                                    let csvData = "Total without discount,Discount,Final Total\n" ++
+                                                  show total ++ "," ++ show discount ++ "," ++ show finalTotal ++ "\n"
+                                    writeFile outputFile csvData
+                                    putStrLn $ "Результаты сохранены в файл: " ++ outputFile
                                 Nothing -> putStrLn "Ошибка подсчёта суммы покупок"

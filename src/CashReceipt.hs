@@ -28,10 +28,11 @@ newtype Discount = Discount Double deriving (Show)
 newtype Products = Products [Product] deriving (Show)
 newtype Cart = Cart [CartItem] deriving (Show)
 
-minDiscountRate, maxDiscountRate, minPurchaseAmount :: Double
+minDiscountRate, maxDiscountRate, minPurchaseAmount, defaultPurchaseDiscount :: Double
 minDiscountRate = 1
 maxDiscountRate = 7
 minPurchaseAmount = 3000
+defaultPurchaseDiscount = 5
 
 negativePriceError :: String
 negativePriceError = "Цена товара не может быть отрицательной."
@@ -62,12 +63,20 @@ calculateItemCost (CartItem name (Quantity quantity)) products
   | otherwise = fmap ((* fromIntegral quantity) . getPrice) (findProductPrice name products)
 
 calculateTotal :: Cart -> Products -> Maybe Double
-calculateTotal (Cart cart) products = sum <$> sequence (map (`calculateItemCost` products) cart)
+calculateTotal (Cart cart) products = do
+  let total = sum <$> sequence (map (`calculateItemCost` products) cart)
+  case total of
+    Just t | t < 0 -> error purchaseAmountError
+    _ -> total
 
-calculateDiscount :: Double -> BonusCard -> Double
-calculateDiscount total (BonusCard _ (Discount discountRate))
-  | total > minPurchaseAmount || (discountRate >= minDiscountRate && discountRate <= maxDiscountRate) = total * discountRate / 100
+calculateDiscount :: Double -> Maybe BonusCard -> Double
+calculateDiscount total Nothing
+  | total > minPurchaseAmount = (defaultPurchaseDiscount / 100) * total
   | otherwise = 0
+calculateDiscount total (Just (BonusCard _ (Discount localDiscountRate)))
+  | localDiscountRate < 0 || localDiscountRate > 100 = error invalidDiscountError
+  | total > minPurchaseAmount = max ((defaultPurchaseDiscount / 100) * total) ((localDiscountRate / 100) * total)
+  | otherwise = (localDiscountRate / 100) * total
 
 calculateFinalTotal :: Double -> Double -> Double
 calculateFinalTotal total discount = total - discount
@@ -75,10 +84,3 @@ calculateFinalTotal total discount = total - discount
 data Product = Product Name Price Category deriving (Show)
 data CartItem = CartItem Name Quantity deriving (Show)
 data BonusCard = BonusCard { birthday :: Maybe String, discountRate :: Discount } deriving (Show)
-
---BonusCard 1-7%, if total > 3000 => discount--
---to consts--
---Нужно добавить обработку ошибок (разных, например, чтение файла, проблемы с файлами, проблемы с числами, обработку в другой файл)--
---Main не должен содержать парсера--
---Убрать инстансы по комментарию выше--
---Ошибки в отдельные константы--
