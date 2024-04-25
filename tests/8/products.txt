@@ -1,0 +1,4 @@
+Bread,1000,Food
+Milk,0.8,Dairy
+Eggs,2500,Eggs
+Chocolate,3.0,Sweets

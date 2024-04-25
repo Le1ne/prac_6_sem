@@ -1,0 +1,4 @@
+Bread,1.0,Food
+Milk,0.8,Dairy
+Eggs,2.5,Eggs
+Chocolate,3.0,Sweets

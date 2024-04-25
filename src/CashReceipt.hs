@@ -46,9 +46,6 @@ negativeQuantityError = "Количество товара не может бы�
 purchaseAmountError :: String
 purchaseAmountError = "Сумма покупок не может быть отрицательной."
 
-discountRangeError :: String
-discountRangeError = "Скидка по бонусной карте применяется при значении от 1% до 7%."
-
 getPrice :: Price -> Double
 getPrice (Price p)
   | p < 0 = error negativePriceError
