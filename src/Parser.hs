@@ -11,7 +11,8 @@ import CashReceipt (Product(..), CartItem(..), BonusCard(..), Products(..), Cart
 import System.IO()
 import System.Directory (doesFileExist)
 import Control.Exception
-import Data.Maybe(catMaybes)
+import Data.Maybe (catMaybes)
+import Constants (outOfBoundsError, errorReadingFile)
 
 parseProduct :: String -> Maybe Product
 parseProduct str = 
@@ -58,11 +59,11 @@ readBonusCard filePath = do
     return $ case content of
       Right text -> case parseBonusCard text of
                      Just card -> Right (Just card)
-                     Nothing -> Left "Скидка по бонусной карте должна быть в пределах от 1% до 7%."
+                     Nothing -> Left outOfBoundsError
       Left err -> Left err
   else return $ Right Nothing
 
 tryReadFile :: FilePath -> IO (Either String String)
 tryReadFile path = catch (Right <$> readFile path) handler
   where handler :: IOException -> IO (Either String String)
-        handler e = return . Left $ "Error reading file: " ++ show e
+        handler e = return . Left $ errorReadingFile ++ show e

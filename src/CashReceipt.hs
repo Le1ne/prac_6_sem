@@ -20,6 +20,8 @@ module CashReceipt
   maxDiscountRate
 ) where
 
+import Constants (minDiscountRate, maxDiscountRate, minPurchaseAmount, defaultPurchaseDiscount, negativePriceError, invalidDiscountError, negativeQuantityError, purchaseAmountError)
+
 newtype Name = Name String deriving (Eq, Show)
 newtype Price = Price Double deriving (Show)
 newtype Category = Category String deriving (Show)
@@ -28,23 +30,9 @@ newtype Discount = Discount Double deriving (Show)
 newtype Products = Products [Product] deriving (Show)
 newtype Cart = Cart [CartItem] deriving (Show)
 
-minDiscountRate, maxDiscountRate, minPurchaseAmount, defaultPurchaseDiscount :: Double
-minDiscountRate = 1
-maxDiscountRate = 7
-minPurchaseAmount = 3000
-defaultPurchaseDiscount = 5
-
-negativePriceError :: String
-negativePriceError = "Цена товара не может быть отрицательной."
-
-invalidDiscountError :: String
-invalidDiscountError = "Значение скидки должно быть между 0 и 100 процентами."
-
-negativeQuantityError :: String
-negativeQuantityError = "Количество товара не может быть отрицательным."
-
-purchaseAmountError :: String
-purchaseAmountError = "Сумма покупок не может быть отрицательной."
+data Product = Product Name Price Category deriving (Show)
+data CartItem = CartItem Name Quantity deriving (Show)
+data BonusCard = BonusCard { birthday :: Maybe String, discountRate :: Discount } deriving (Show)
 
 getPrice :: Price -> Double
 getPrice (Price p)
@@ -77,7 +65,3 @@ calculateDiscount total (Just (BonusCard _ (Discount localDiscountRate)))
 
 calculateFinalTotal :: Double -> Double -> Double
 calculateFinalTotal total discount = total - discount
-
-data Product = Product Name Price Category deriving (Show)
-data CartItem = CartItem Name Quantity deriving (Show)
-data BonusCard = BonusCard { birthday :: Maybe String, discountRate :: Discount } deriving (Show)
