@@ -1,3 +1,4 @@
+-- Модуль SimpleUI, реализующий пользовательский интерфейс
 module SimpleUI
 ( runUI
 ) where
@@ -7,29 +8,30 @@ import CashReceipt (calculateTotal, calculateDiscount, calculateFinalTotal, find
 import Data.Maybe (fromMaybe)
 import Constants (errorLoadingProducts, errorLoadingCart, errorLoadingBonusCard, welcomeMessage, promptProductsFile, promptCartFile, promptBonusCardFile, promptOutputFile)
 
+-- Основная функция интерфейса пользователя
 runUI :: IO ()
 runUI = do
-    putStrLn welcomeMessage
+    putStrLn welcomeMessage -- Вывод приветственного сообщения
     putStrLn promptProductsFile
-    productsPath <- getLine
+    productsPath <- getLine -- Ввод пути к файлу продуктов
     putStrLn promptCartFile
-    cartPath <- getLine
+    cartPath <- getLine -- Ввод пути к файлу корзины
     putStrLn promptBonusCardFile
-    bonusCardPath <- getLine
+    bonusCardPath <- getLine -- Ввод пути к файлу бонусной карты
     putStrLn promptOutputFile
-    outputFile <- getLine
+    outputFile <- getLine -- Ввод пути к файлу для вывода результатов
 
     productsResult <- readProducts productsPath
     case productsResult of
-        Left err -> putStrLn $ errorLoadingProducts ++ err
+        Left err -> putStrLn $ errorLoadingProducts ++ err -- Обработка ошибки загрузки продуктов
         Right products -> do
             cartResult <- readCart cartPath
             case cartResult of
-                Left err -> putStrLn $ errorLoadingCart ++ err
+                Left err -> putStrLn $ errorLoadingCart ++ err -- Обработка ошибки загрузки корзины
                 Right cart -> do
                     bonusCardResult <- readBonusCard bonusCardPath
                     case bonusCardResult of
-                        Left err -> putStrLn $ errorLoadingBonusCard ++ err
+                        Left err -> putStrLn $ errorLoadingBonusCard ++ err -- Обработка ошибки загрузки бонусной карты
                         Right maybeBonusCard -> do
                             let bonusCardApplied = fromMaybe (BonusCard Nothing (Discount 0)) maybeBonusCard
                             let total = calculateTotal cart products
@@ -40,9 +42,10 @@ runUI = do
                                           itemsDetails ++
                                           "Скидка,,," ++ show discount ++ "\n" ++
                                           "Итого,,," ++ show finalTotal ++ "\n"
-                            writeFile outputFile csvData
+                            writeFile outputFile csvData -- Запись результатов в файл
                             putStrLn $ "Результаты сохранены в файл: " ++ outputFile
 
+-- Форматирует данные о покупке в строку для CSV файла
 formatCartItem :: Products -> CartItem -> String
 formatCartItem (Products products) (CartItem (Name name) (Quantity quantity)) =
     case findProductPrice (Name name) (Products products) of
@@ -51,7 +54,8 @@ formatCartItem (Products products) (CartItem (Name name) (Quantity quantity)) =
             ++ show quantity ++ ","
             ++ show price ++ ","
             ++ show (price * fromIntegral quantity) ++ "\n"
-        Nothing -> "Product not found.\n"
+        Nothing -> "Товар не найден.\n"
 
+-- Получает список товаров в корзине
 getCartItems :: Cart -> [CartItem]
 getCartItems (Cart items) = items
